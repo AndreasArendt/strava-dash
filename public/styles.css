@@ -256,13 +256,14 @@ input[type="date"] {
 
 .map-overlay-message {
   bottom: 20px;
-  padding: 8px 14px;
+  padding: 10px 18px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.85);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
   font-size: 13px;
   z-index: 2;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .map-overlay-spinner:not([hidden]),

@@ -288,15 +288,18 @@ export function applyMapStyle(map, styleId, activities = []) {
   if (!nextStyle) return;
 
   currentStyleId = desiredId;
-  map.setStyle(nextStyle);
-  ensureNavigationControl(map);
-  map.once("styledata", () => {
+
+  const reapply = () => {
+    ensureNavigationControl(map);
     if (activities.length) {
       renderPolylines(map, activities);
     } else {
       clearPolylineLayer(map);
     }
-  });
+  };
+
+  map.once("load", reapply);
+  map.setStyle(nextStyle);
 }
 
 function ensureNavigationControl(map) {
