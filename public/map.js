@@ -10,6 +10,7 @@ const STRAVA_ACTIVITY_URL = "https://www.strava.com/activities/";
 
 let keyPromise;
 let interactionsBound = false;
+let hoveredFeatureId = null;
 
 /**
  * Decode Google-style polyline → array of [lat, lng]
@@ -107,20 +108,22 @@ function createFeatureCollection(activities) {
         .map(([lat, lng]) => [lng, lat])  // Convert to [lng, lat]
         .filter((pt) => Number.isFinite(pt[0]) && Number.isFinite(pt[1]));
 
-      return decoded.length
-        ? {
-            type: "Feature",
-            properties: {
-              color: `hsl(${(idx * 57) % 360}, 70%, 55%)`,
-              activityId: activity.id ?? "",
-              activityUrl: activity.id ? `${STRAVA_ACTIVITY_URL}${activity.id}` : ""
-            },
-            geometry: {
-              type: "LineString",
-              coordinates: decoded
-            }
-          }
-        : null;
+      if (!decoded.length) return null;
+
+      const id = activity?.id ?? `activity-${idx}`;
+
+      return {
+        type: "Feature",
+        id,
+        properties: {
+          activityId: activity.id ?? "",
+          activityUrl: activity.id ? `${STRAVA_ACTIVITY_URL}${activity.id}` : ""
+        },
+        geometry: {
+          type: "LineString",
+          coordinates: decoded
+        }
+      };
     })
     .filter(Boolean);
 
@@ -157,8 +160,13 @@ function ensureLayer(map) {
       type: "line",
       source: ROUTE_SOURCE_ID,
       paint: {
-        "line-color": ["coalesce", ["get", "color"], "#38acbd"],
-        "line-width": 3,
+        "line-color": "#38acbd",
+        "line-width": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false],
+          5,
+          3
+        ],
         "line-opacity": 0.85
       }
     });
@@ -238,17 +246,30 @@ function bindLayerInteractions(map) {
     }
   };
 
-  const setCursor = () => {
+  const handleMove = (event) => {
+    const feature = event?.features?.[0];
+    if (!feature?.id) return;
+
+    if (hoveredFeatureId && hoveredFeatureId !== feature.id) {
+      map.setFeatureState({ source: ROUTE_SOURCE_ID, id: hoveredFeatureId }, { hover: false });
+    }
+
+    hoveredFeatureId = feature.id;
+    map.setFeatureState({ source: ROUTE_SOURCE_ID, id: hoveredFeatureId }, { hover: true });
     map.getCanvas().style.cursor = "pointer";
   };
 
-  const resetCursor = () => {
+  const resetHover = () => {
+    if (hoveredFeatureId) {
+      map.setFeatureState({ source: ROUTE_SOURCE_ID, id: hoveredFeatureId }, { hover: false });
+      hoveredFeatureId = null;
+    }
     map.getCanvas().style.cursor = "";
   };
 
   map.on("click", ROUTE_LAYER_ID, handleClick);
-  map.on("mouseenter", ROUTE_LAYER_ID, setCursor);
-  map.on("mouseleave", ROUTE_LAYER_ID, resetCursor);
+  map.on("mousemove", ROUTE_LAYER_ID, handleMove);
+  map.on("mouseleave", ROUTE_LAYER_ID, resetHover);
 
   interactionsBound = true;
 }
