@@ -36,10 +36,10 @@ class StravaAPI:
 
     def authorize(self):
         print("Opening browser for Strava authentication...")
-        webbrowser.open("https://strava-dash-zeta.vercel.app/api/start")
+        webbrowser.open("https://atlo-zeta.vercel.app/api/start")
 
     def refresh(self):
-        url = f"https://strava-dash-zeta.vercel.app/api/refresh?refresh_token={self.refresh_token}"
+        url = f"https://atlo-zeta.vercel.app/api/refresh?refresh_token={self.refresh_token}"
         r = requests.get(url).json()
 
         if "access_token" in r:

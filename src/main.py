@@ -21,7 +21,7 @@ def acquire_data():
         token = None
         for attempt in range(5):
             try:
-                r = requests.get("https://strava-dash-zeta.vercel.app/api/token")
+                r = requests.get("https://atlo-zeta.vercel.app/api/token")
                 if r.status_code == 200:
                     token = r.json()
                     if "access_token" not in token:

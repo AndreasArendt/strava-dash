@@ -1,7 +1,5 @@
 import crypto from "node:crypto";
 
-const BASE_URL = process.env.BASE_URL || "https://strava-dash-zeta.vercel.app";
-
 export const config = { runtime: "nodejs" };
 
 export default function handler(req, res) {
@@ -16,7 +14,7 @@ export default function handler(req, res) {
   const params = new URLSearchParams({
     client_id: process.env.STRAVA_CLIENT_ID,
     response_type: "code",
-    redirect_uri: `${BASE_URL}/api/strava`,
+    redirect_uri: `${process.env.BASE_URL}/api/strava`,
     approval_prompt: "auto",
     scope: "read,activity:read",
     state
