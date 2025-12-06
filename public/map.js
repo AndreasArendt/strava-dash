@@ -1,6 +1,7 @@
-// Import SDK modules (ES Modules)
-import { Map, MapStyle, config, Language, NavigationControl, LngLatBounds } from '@maptiler/sdk';
-import '@maptiler/sdk/dist/maptiler-sdk.css';
+const maptilersdk = window.maptilersdk;
+if (!maptilersdk) {
+  throw new Error("MapTiler SDK failed to load. Make sure the script is included in index.html.");
+}
 
 const ROUTE_SOURCE_ID = "strava-routes";
 const ROUTE_LAYER_ID = "strava-routes-layer";
@@ -69,9 +70,29 @@ async function fetchMaptilerKey() {
  * Wait for map to finish loading
  */
 function waitForMap(map) {
-  if (map.loaded()) return Promise.resolve(map);
-  return new Promise((resolve) => map.once("load", () => resolve(map)));
+  if (map.loaded()) {
+    return Promise.resolve(map);
+  }
+
+  return new Promise((resolve, reject) => {
+    const onLoad = () => {
+      cleanup();
+      resolve(map);
+    };
+    const onError = (err) => {
+      cleanup();
+      reject(err);
+    };
+    const cleanup = () => {
+      map.off("load", onLoad);
+      map.off("error", onError);
+    };
+
+    map.on("load", onLoad);
+    map.on("error", onError);
+  });
 }
+
 
 /**
  * Convert activities with polylines → GeoJSON FeatureCollection
@@ -114,7 +135,7 @@ function fitToFeatures(map, features) {
   const bounds = features.reduce((acc, feature) => {
     feature.geometry.coordinates.forEach((coord) => acc.extend(coord));
     return acc;
-  }, new LngLatBounds(
+  }, new maptilersdk.LngLatBounds(
     features[0].geometry.coordinates[0],
     features[0].geometry.coordinates[0]
   ));
@@ -144,14 +165,16 @@ function ensureLayer(map) {
  * Update (or create) the shared GeoJSON source
  */
 function updateSource(map, data) {
-  if (map.getSource(ROUTE_SOURCE_ID)) {
-    map.getSource(ROUTE_SOURCE_ID).setData(data);
-  } else {
-    map.addSource(ROUTE_SOURCE_ID, {
-      type: "geojson",
-      data
-    });
+  const existing = map.getSource(ROUTE_SOURCE_ID);
+  if (existing) {
+    existing.setData(data);
+    return;
   }
+
+  map.addSource(ROUTE_SOURCE_ID, {
+    type: "geojson",
+    data
+  });
 }
 
 /**
@@ -159,19 +182,19 @@ function updateSource(map, data) {
  */
 export async function initMap(container) {
   const apiKey = await fetchMaptilerKey();
-  config.apiKey = apiKey;
-  config.primaryLanguage = Language.ENGLISH;
 
-  const map = new Map({
-    container,
-    style: MapStyle.STREETS,
+  maptilersdk.config.apiKey = apiKey;
+  maptilersdk.config.primaryLanguage = maptilersdk.Language.ENGLISH;
+
+  const map = new maptilersdk.Map({
+    container: container,
+    style: maptilersdk.MapStyle.STREETS,
     center: DEFAULT_VIEW.center,
     zoom: DEFAULT_VIEW.zoom
   });
 
   await waitForMap(map);
-
-  map.addControl(new NavigationControl(), "top-right");
+  map.addControl(new maptilersdk.NavigationControl(), "top-right");
 
   return map;
 }
@@ -189,6 +212,9 @@ export function renderPolylines(map, activities = []) {
     fitToFeatures(map, collection.features);
   };
 
-  if (map.loaded()) apply();
-  else map.once("load", apply);
+  if (map.loaded()) {
+    apply();
+  } else {
+    map.once("load", apply);
+  }
 }

@@ -1,5 +1,6 @@
 import { api } from "./api.js";
 import { setStatus, renderList } from "./ui.js";
+import { initMap, renderPolylines } from "./map.js";
 
 const els = {
   connect: document.getElementById("connect"),
@@ -15,6 +16,7 @@ const els = {
 };
 
 let activities = [];
+let mapInstance;
 
 const toInputValue = (date) => {
   const tzOffset = date.getTimezoneOffset();
@@ -65,6 +67,11 @@ async function loadActivities() {
     activities = await api(`/api/activities?${params.toString()}`);
 
     els.count.textContent = activities.length.toString();
+
+    if (mapInstance) {
+      renderPolylines(mapInstance, activities);
+    }
+
     renderList(activities, els.list);
 
     setStatus("Activities loaded.", "var(--success)");
@@ -99,7 +106,13 @@ function applyRange(range) {
 }
 
 async function init() {
-  // Set default date range to past year
+  try {
+    mapInstance = await initMap(els.map);
+  } catch (err) {
+    console.error(err);
+    setStatus(err.message || "Failed to load the map.", "var(--error)");
+  }
+
   applyRange("year");
 
   els.quickButtons.forEach((btn) => {
