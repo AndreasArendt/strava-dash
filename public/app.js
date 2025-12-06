@@ -4,7 +4,6 @@ import { initMap, renderPolylines, applyMapStyle, DEFAULT_MAP_STYLE_ID } from ".
 
 const els = {
   connect: document.getElementById("connect"),
-  refresh: document.getElementById("refresh"),
   status: document.getElementById("status"),
   list: document.getElementById("list"),
   count: document.getElementById("count"),
@@ -19,6 +18,8 @@ const els = {
 let activities = [];
 let mapInstance;
 let activeMapStyle = DEFAULT_MAP_STYLE_ID;
+let authPollTimer = null;
+const AUTH_ERROR_PATTERN = /(Not authenticated|Missing session state|No token)/i;
 
 const toInputValue = (date) => {
   const tzOffset = date.getTimezoneOffset();
@@ -49,6 +50,60 @@ function highlightQuick(range) {
   });
 }
 
+function setConnectAttention(active) {
+  if (!els.connect) return;
+  els.connect.classList.toggle("need-auth", Boolean(active));
+}
+
+function handleAuthRequired(message) {
+  setConnectAttention(true);
+  showStatusMessage(message || "Connect Strava to load your activities.", "var(--muted)");
+}
+
+async function checkAuthStatus() {
+  try {
+    const res = await fetch("/api/token", { credentials: "include" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+function stopAuthPolling() {
+  if (authPollTimer) {
+    clearInterval(authPollTimer);
+    authPollTimer = null;
+  }
+}
+
+function startAuthPolling() {
+  if (authPollTimer) return;
+  authPollTimer = window.setInterval(async () => {
+    const authed = await checkAuthStatus();
+    if (authed) {
+      stopAuthPolling();
+      if (authPopup && !authPopup.closed) {
+        authPopup.close();
+      }
+      authPopup = null;
+      setConnectAttention(false);
+      loadActivities();
+    }
+  }, 2500);
+}
+
+function startAuthFlow(event) {
+  event?.preventDefault();
+  const popup = window.open("/api/start", "strava-auth", "width=640,height=760");
+  if (popup) {
+    popup.focus();
+    showStatusMessage("Complete the Strava authentication window, then return here.", "var(--muted)");
+    startAuthPolling();
+  } else {
+    window.location.href = "/api/start";
+  }
+}
+
 async function loadActivities() {
   const { start, end } = getDateRange();
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
@@ -75,11 +130,15 @@ async function loadActivities() {
     }
 
     renderList(activities, els.list);
-
+    setConnectAttention(false);
     hideStatusSpinner();
   } catch (err) {
     console.error(err);
-    showStatusMessage(err.message, "var(--error)");
+    if (AUTH_ERROR_PATTERN.test(err?.message || "")) {
+      handleAuthRequired("Connect Strava to load your activities.");
+    } else {
+      showStatusMessage(err.message, "var(--error)");
+    }
   }
 }
 
@@ -150,11 +209,11 @@ async function init() {
     });
   });
 
-  els.connect.onclick = () => {
-    window.location.href = "/api/start";
-  };
+  els.connect.addEventListener("click", startAuthFlow);
 
-  els.refresh.onclick = loadActivities;
+  checkAuthStatus().then((authed) => {
+    setConnectAttention(!authed);
+  });
 }
 init().catch((err) => {
   console.error(err);

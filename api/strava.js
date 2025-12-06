@@ -43,11 +43,90 @@ export default async function handler(req, res) {
     const ttlSeconds = 60 * 60 * 24 * 30;
     await kv.set(`strava:token:${state}`, token, { ex: ttlSeconds });
 
+    const baseUrl = process.env.BASE_URL?.replace(/\/$/, "") || "";
+    const logoUrl = baseUrl ? `${baseUrl}/logo/atlo.png` : "https://atlo.vercel.app/logo/atlo.png";
+
     res.status(200).send(`
-      <html><body>
-      <h2>Authentication successful!</h2>
-      <p>You can close this window and return to the app.</p>
-      </body></html>
+      <!doctype html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Atlo · Connected</title>
+          <style>
+            :root {
+              color-scheme: light dark;
+              font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+              background: linear-gradient(135deg, #edf2f7, #f8fafc);
+              color: #0f172a;
+            }
+            body {
+              margin: 0;
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 32px 16px;
+            }
+            .card {
+              background: rgba(255, 255, 255, 0.92);
+              border: 1px solid rgba(15, 23, 42, 0.08);
+              border-radius: 20px;
+              padding: 32px 40px;
+              text-align: center;
+              box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+              max-width: 420px;
+              width: 100%;
+            }
+            h2 {
+              margin-top: 18px;
+              margin-bottom: 10px;
+              font-size: 28px;
+            }
+            p {
+              margin: 0 0 12px;
+              color: #475569;
+            }
+            .logo {
+              width: 72px;
+              height: 72px;
+              border-radius: 18px;
+              object-fit: contain;
+              background: #ecfeff;
+              padding: 12px;
+              box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+            }
+            button {
+              margin-top: 18px;
+              background: linear-gradient(135deg, #113c4c, #38acbd);
+              color: #fff;
+              border: none;
+              border-radius: 999px;
+              padding: 12px 24px;
+              font-size: 15px;
+              font-weight: 600;
+              cursor: pointer;
+              box-shadow: 0 12px 32px rgba(56, 172, 189, 0.35);
+              transition: transform 120ms ease, box-shadow 120ms ease;
+            }
+            button:hover {
+              transform: translateY(-1px);
+            }
+            button:active {
+              transform: translateY(0);
+              box-shadow: 0 8px 20px rgba(17, 60, 76, 0.4);
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <img src="${logoUrl}" alt="Atlo logo" class="logo" />
+            <h2>You're connected</h2>
+            <p>You can close this window and return to Atlo. Your activities will refresh automatically.</p>
+            <button onclick="window.close()">Close this window</button>
+          </div>
+        </body>
+      </html>
     `);
   } catch (err) {
     console.log("Error in /api/strava:", err);
