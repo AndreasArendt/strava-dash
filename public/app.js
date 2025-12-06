@@ -1,6 +1,6 @@
 import { api } from "./api.js";
 import { setStatus, renderList } from "./ui.js";
-import { initMap, renderPolylines } from "./map.js";
+import { initMap, renderPolylines, applyMapStyle, DEFAULT_MAP_STYLE_ID } from "./map.js";
 
 const els = {
   connect: document.getElementById("connect"),
@@ -12,11 +12,13 @@ const els = {
   startDate: document.getElementById("start-date"),
   endDate: document.getElementById("end-date"),
   rangeLabel: document.getElementById("range-label"),
-  quickButtons: document.querySelectorAll("[data-range]")
+  quickButtons: document.querySelectorAll("[data-range]"),
+  mapStyleButtons: document.querySelectorAll("[data-map-style]")
 };
 
 let activities = [];
 let mapInstance;
+let activeMapStyle = DEFAULT_MAP_STYLE_ID;
 
 const toInputValue = (date) => {
   const tzOffset = date.getTimezoneOffset();
@@ -105,6 +107,22 @@ function applyRange(range) {
   loadActivities();
 }
 
+function setActiveMapStyle(styleId) {
+  if (!els.mapStyleButtons?.length) return;
+  els.mapStyleButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mapStyle === styleId);
+  });
+}
+
+function changeMapStyle(styleId) {
+  if (!styleId || styleId === activeMapStyle) return;
+  activeMapStyle = styleId;
+  setActiveMapStyle(styleId);
+  if (mapInstance) {
+    applyMapStyle(mapInstance, styleId, activities);
+  }
+}
+
 async function init() {
   try {
     mapInstance = await initMap(els.map);
@@ -118,6 +136,12 @@ async function init() {
   els.quickButtons.forEach((btn) => {
     btn.addEventListener("click", () => applyRange(btn.dataset.range));
   });
+
+  els.mapStyleButtons.forEach((btn) => {
+    btn.addEventListener("click", () => changeMapStyle(btn.dataset.mapStyle));
+  });
+
+  setActiveMapStyle(activeMapStyle);
 
   [els.startDate, els.endDate].forEach((input) => {
     input.addEventListener("change", () => {

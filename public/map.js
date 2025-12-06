@@ -8,9 +8,28 @@ const ROUTE_LAYER_ID = "strava-routes-layer";
 const DEFAULT_VIEW = { center: [0, 0], zoom: 1.5 };
 const STRAVA_ACTIVITY_URL = "https://www.strava.com/activities/";
 
+const MAP_STYLE_LOOKUP = {
+  bright: maptilersdk.MapStyle.BRIGHT,
+  outdoor: maptilersdk.MapStyle.OUTDOOR,
+  hybrid: maptilersdk.MapStyle.HYBRID,
+  topo: maptilersdk.MapStyle.TOPO
+};
+
+export const DEFAULT_MAP_STYLE_ID = "bright";
+let currentStyleId = DEFAULT_MAP_STYLE_ID;
+
 let keyPromise;
 let interactionsBound = false;
 let hoveredFeatureId = null;
+let handleClickFn;
+let handleMoveFn;
+let handleLeaveFn;
+let navigationControl;
+let navigationControlMap;
+
+function resolveStyle(styleId = DEFAULT_MAP_STYLE_ID) {
+  return MAP_STYLE_LOOKUP[styleId] || maptilersdk.MapStyle.STREETS;
+}
 
 /**
  * Decode Google-style polyline → array of [lat, lng]
@@ -193,6 +212,25 @@ function updateSource(map, data) {
   });
 }
 
+function clearPolylineLayer(map) {
+  if (interactionsBound) {
+    map.off("click", ROUTE_LAYER_ID, handleClickFn);
+    map.off("mousemove", ROUTE_LAYER_ID, handleMoveFn);
+    map.off("mouseleave", ROUTE_LAYER_ID, handleLeaveFn);
+    interactionsBound = false;
+    hoveredFeatureId = null;
+    handleClickFn = handleMoveFn = handleLeaveFn = undefined;
+  }
+
+  if (map.getLayer(ROUTE_LAYER_ID)) {
+    map.removeLayer(ROUTE_LAYER_ID);
+  }
+
+  if (map.getSource(ROUTE_SOURCE_ID)) {
+    map.removeSource(ROUTE_SOURCE_ID);
+  }
+}
+
 /**
  * Initialize map using recommended MapTiler ES module API
  */
@@ -204,13 +242,13 @@ export async function initMap(container) {
 
   const map = new maptilersdk.Map({
     container: container,
-    style: maptilersdk.MapStyle.STREETS,
+    style: resolveStyle(currentStyleId),
     center: DEFAULT_VIEW.center,
     zoom: DEFAULT_VIEW.zoom
   });
 
   await waitForMap(map);
-  map.addControl(new maptilersdk.NavigationControl(), "top-right");
+  ensureNavigationControl(map);
 
   return map;
 }
@@ -223,6 +261,13 @@ export function renderPolylines(map, activities = []) {
 
   const apply = () => {
     const collection = createFeatureCollection(activities);
+    clearPolylineLayer(map);
+
+    if (!collection.features.length) {
+      map.easeTo({ center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom, duration: 600 });
+      return;
+    }
+
     updateSource(map, collection);
     ensureLayer(map);
     fitToFeatures(map, collection.features);
@@ -235,10 +280,42 @@ export function renderPolylines(map, activities = []) {
   }
 }
 
+export function applyMapStyle(map, styleId, activities = []) {
+  if (!map) return;
+
+  const desiredId = MAP_STYLE_LOOKUP[styleId] ? styleId : DEFAULT_MAP_STYLE_ID;
+  const nextStyle = resolveStyle(desiredId);
+  if (!nextStyle) return;
+
+  currentStyleId = desiredId;
+  map.setStyle(nextStyle);
+  ensureNavigationControl(map);
+  map.once("styledata", () => {
+    if (activities.length) {
+      renderPolylines(map, activities);
+    } else {
+      clearPolylineLayer(map);
+    }
+  });
+}
+
+function ensureNavigationControl(map) {
+  if (navigationControlMap === map) return;
+
+  if (!navigationControl) {
+    navigationControl = new maptilersdk.NavigationControl({ showZoom: false, showCompass: true });
+  } else if (navigationControlMap) {
+    navigationControlMap.removeControl(navigationControl);
+  }
+
+  map.addControl(navigationControl, "top-right");
+  navigationControlMap = map;
+}
+
 function bindLayerInteractions(map) {
   if (interactionsBound) return;
 
-  const handleClick = (event) => {
+  handleClickFn = (event) => {
     const feature = event?.features?.[0];
     const url = feature?.properties?.activityUrl;
     if (url) {
@@ -246,7 +323,7 @@ function bindLayerInteractions(map) {
     }
   };
 
-  const handleMove = (event) => {
+  handleMoveFn = (event) => {
     const feature = event?.features?.[0];
     if (!feature?.id) return;
 
@@ -259,7 +336,7 @@ function bindLayerInteractions(map) {
     map.getCanvas().style.cursor = "pointer";
   };
 
-  const resetHover = () => {
+  handleLeaveFn = () => {
     if (hoveredFeatureId) {
       map.setFeatureState({ source: ROUTE_SOURCE_ID, id: hoveredFeatureId }, { hover: false });
       hoveredFeatureId = null;
@@ -267,9 +344,9 @@ function bindLayerInteractions(map) {
     map.getCanvas().style.cursor = "";
   };
 
-  map.on("click", ROUTE_LAYER_ID, handleClick);
-  map.on("mousemove", ROUTE_LAYER_ID, handleMove);
-  map.on("mouseleave", ROUTE_LAYER_ID, resetHover);
+  map.on("click", ROUTE_LAYER_ID, handleClickFn);
+  map.on("mousemove", ROUTE_LAYER_ID, handleMoveFn);
+  map.on("mouseleave", ROUTE_LAYER_ID, handleLeaveFn);
 
   interactionsBound = true;
 }
