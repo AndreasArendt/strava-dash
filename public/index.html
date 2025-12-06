@@ -8,23 +8,60 @@
 </head>
 <body>
   <div class="wrap">
-    <header>
-      <h1>Atlo</h1>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Atlo</p>
+        <h1>Your activities, mapped clearly.</h1>
+        <p>Pick a time window and see every ride and run unfold on the canvas. Connect to Strava, choose a range, and the map comes alive.</p>
+      </div>
       <div class="btn-group">
         <button id="connect">Connect Strava</button>
-        <button id="refresh">Load Activities</button>
+        <button id="refresh">Reload view</button>
       </div>
     </header>
 
-    <div class="panel">
-      <p id="status" class="muted">Waiting to load activities…</p>
-      <canvas id="map"></canvas>
-    </div>
+    <section class="panel controls">
+      <div class="range-inputs">
+        <label>
+          From
+          <input type="date" id="start-date" />
+        </label>
+        <label>
+          To
+          <input type="date" id="end-date" />
+        </label>
+        <div class="quick-buttons" aria-label="Quick timeframe buttons">
+          <button type="button" data-range="week">Last week</button>
+          <button type="button" data-range="month">Last month</button>
+          <button type="button" data-range="year">Last year</button>
+        </div>
+      </div>
+      <div class="overview">
+        <div>
+          <p class="label">Activities in range</p>
+          <p class="value"><span id="count">0</span></p>
+        </div>
+        <div>
+          <p class="label">Showing</p>
+          <p class="value" id="range-label">—</p>
+        </div>
+      </div>
+    </section>
 
-    <div class="panel">
-      <div class="pill" aria-label="Activity count"><span id="count">0</span> activities</div>
+    <section class="map-focus">
+      <div class="panel map-panel">
+        <p id="status" class="muted">Waiting to load activities…</p>
+        <canvas id="map"></canvas>
+      </div>
+    </section>
+
+    <section class="panel activities">
+      <div class="activities-header">
+        <h2>Queried activities</h2>
+        <p class="muted">Click an entry to open it on Strava.</p>
+      </div>
       <ul id="list"></ul>
-    </div>
+    </section>
   </div>
 
   <script type="module" src="/app.js"></script>

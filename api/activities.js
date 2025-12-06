@@ -45,9 +45,27 @@ export default async function handler(req, res) {
       if (refreshed) token = refreshed;
     }
 
-    const after = req.query.after || "2023-01-01";
+    const nowDate = new Date();
+    const defaultAfter = new Date(nowDate);
+    defaultAfter.setFullYear(defaultAfter.getFullYear() - 1);
+
+    const toUnix = (value, fallback) => {
+      if (!value) return fallback;
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? fallback : Math.floor(parsed.getTime() / 1000);
+    };
+
+    const afterSeconds = toUnix(req.query.after, Math.floor(defaultAfter.getTime() / 1000));
+    const beforeSeconds = toUnix(req.query.before, Math.floor(nowDate.getTime() / 1000));
+
+    const search = new URLSearchParams();
+    if (afterSeconds) search.set("after", afterSeconds.toString());
+    if (beforeSeconds && beforeSeconds > afterSeconds) {
+      search.set("before", beforeSeconds.toString());
+    }
+
     const resp = await fetch(
-      `https://www.strava.com/api/v3/athlete/activities?after=${Math.floor(new Date(after).getTime() / 1000)}`,
+      `https://www.strava.com/api/v3/athlete/activities?${search.toString()}`,
       {
         headers: { Authorization: `Bearer ${token.access_token}` }
       }
