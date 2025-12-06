@@ -1,7 +1,38 @@
-export function setStatus(text, color = "var(--muted)") {
-  const el = document.getElementById("status");
-  el.textContent = text;
-  el.style.color = color;
+const spinnerEl = document.getElementById("status-spinner");
+const messageEl = document.getElementById("status-message");
+
+function hideAllStatus() {
+  if (spinnerEl) spinnerEl.hidden = true;
+  if (messageEl) {
+    messageEl.textContent = "";
+    messageEl.hidden = true;
+  }
+}
+
+export function showStatusSpinner() {
+  if (spinnerEl) {
+    spinnerEl.hidden = false;
+  }
+  if (messageEl) {
+    messageEl.hidden = true;
+  }
+}
+
+export function hideStatusSpinner() {
+  if (spinnerEl) spinnerEl.hidden = true;
+  if (messageEl) {
+    messageEl.hidden = true;
+    messageEl.textContent = "";
+  }
+}
+
+export function showStatusMessage(text, color = "var(--error)") {
+  hideAllStatus();
+  if (messageEl) {
+    messageEl.textContent = text;
+    messageEl.style.color = color;
+    messageEl.hidden = false;
+  }
 }
 
 const escapeHtml = (str = "") =>

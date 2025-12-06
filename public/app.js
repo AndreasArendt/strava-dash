@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { setStatus, renderList } from "./ui.js";
+import { renderList, showStatusSpinner, hideStatusSpinner, showStatusMessage } from "./ui.js";
 import { initMap, renderPolylines, applyMapStyle, DEFAULT_MAP_STYLE_ID } from "./map.js";
 
 const els = {
@@ -52,17 +52,17 @@ function highlightQuick(range) {
 async function loadActivities() {
   const { start, end } = getDateRange();
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    setStatus("Select a valid timeframe.", "var(--error)");
+    showStatusMessage("Select a valid timeframe.", "var(--error)");
     return;
   }
 
   if (start > end) {
-    setStatus("The start date has to be before the end date.", "var(--error)");
+    showStatusMessage("The start date has to be before the end date.", "var(--error)");
     return;
   }
 
   els.rangeLabel.textContent = formatRangeLabel(start, end);
-  setStatus("Loading activities…");
+  showStatusSpinner();
 
   try {
     const params = new URLSearchParams({ after: els.startDate.value, before: els.endDate.value });
@@ -76,10 +76,10 @@ async function loadActivities() {
 
     renderList(activities, els.list);
 
-    setStatus("Activities loaded.", "var(--success)");
+    hideStatusSpinner();
   } catch (err) {
     console.error(err);
-    setStatus(err.message, "var(--error)");
+    showStatusMessage(err.message, "var(--error)");
   }
 }
 
@@ -128,7 +128,7 @@ async function init() {
     mapInstance = await initMap(els.map);
   } catch (err) {
     console.error(err);
-    setStatus(err.message || "Failed to load the map.", "var(--error)");
+    showStatusMessage(err.message || "Failed to load the map.", "var(--error)");
   }
 
   applyRange("year");
@@ -158,5 +158,5 @@ async function init() {
 }
 init().catch((err) => {
   console.error(err);
-  setStatus("Failed to initialize the app.", "var(--error)");
+  showStatusMessage("Failed to initialize the app.", "var(--error)");
 });

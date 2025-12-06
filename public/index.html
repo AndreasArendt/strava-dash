@@ -54,21 +54,22 @@
       </div>
     </section>
 
-    <section class="map-focus">
-      <div class="panel map-panel">
-        <p id="status" class="muted">Waiting to load activities…</p>
-        <div class="map-style-card">
-          <div class="map-style-controls" aria-label="Map style selection">
-            <span class="map-style-label">Map style</span>
-            <div class="map-style-buttons" role="group">
-              <button type="button" data-map-style="bright">Bright</button>
-              <button type="button" data-map-style="outdoor">Outdoor</button>
-              <button type="button" data-map-style="hybrid">Hybrid</button>
-              <button type="button" data-map-style="topo">Topo</button>
-            </div>
+    <section class="panel map-panel">
+      <div class="map-style-card">
+        <div class="map-style-controls" aria-label="Map style selection">
+          <span class="map-style-label">Map style</span>
+          <div class="map-style-buttons" role="group">
+            <button type="button" data-map-style="bright">Bright</button>
+            <button type="button" data-map-style="outdoor">Outdoor</button>
+            <button type="button" data-map-style="hybrid">Hybrid</button>
+            <button type="button" data-map-style="topo">Topo</button>
           </div>
         </div>
+      </div>
+      <div class="map-wrapper">
         <div id="map" aria-label="Activity map"></div>
+        <div id="status-spinner" class="map-overlay-spinner" role="status" aria-label="Loading" hidden></div>
+        <p id="status-message" class="map-overlay-message" hidden></p>
       </div>
     </section>
 

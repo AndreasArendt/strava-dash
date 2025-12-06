@@ -164,13 +164,7 @@ input[type="date"] {
   font-weight: 600;
 }
 
-.map-focus {
-  display: flex;
-  justify-content: center;
-}
-
 .map-panel {
-  width: min(900px, 100%);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -229,11 +223,51 @@ input[type="date"] {
   background: rgba(15, 23, 42, 0.04);
 }
 
+.map-wrapper {
+  position: relative;
+}
+
 #map {
   width: 100%;
-  height: 520px;
+  height: clamp(360px, 55vh, 560px);
   border-radius: 18px;
   overflow: hidden;
+}
+
+.map-overlay-spinner,
+.map-overlay-message {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+}
+
+.map-overlay-spinner {
+  top: 45%;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: spin 700ms linear infinite;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+  z-index: 2;
+}
+
+.map-overlay-message {
+  bottom: 20px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #fff;
+  font-size: 13px;
+  z-index: 2;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+}
+
+.map-overlay-spinner:not([hidden]),
+.map-overlay-message:not([hidden]) {
+  display: block;
 }
 
 .activities-header {
@@ -352,4 +386,13 @@ li.muted {
 
 .maplibregl-ctrl-compass {
   background: transparent !important;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
