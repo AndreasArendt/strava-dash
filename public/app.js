@@ -84,6 +84,7 @@ function startAuthPolling() {
       stopAuthPolling();
       setConnectAttention(false);
       hideStatusSpinner();
+      mapInstance = await initMap(els.map);
       loadActivities();
     }
   }, 2500);
