@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     const state = getStateFromRequest(req);
     if (!state) return res.status(401).send("Missing session state.");
 
-    const sessionKey = `strava:session:${state}`;
+    const sessionKey = `atlo:session:${state}`;
     const session = await kv.get(sessionKey);
     if (!session) return res.status(401).send("Session expired; please authenticate.");
     await kv.expire(sessionKey, STATE_TTL_SECONDS);

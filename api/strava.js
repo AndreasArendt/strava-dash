@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     // Persist per-user token securely with a reasonable TTL (30 days)
     const ttlSeconds = 60 * 60 * 24 * 30;
     await kv.set(`strava:token:${state}`, token, { ex: ttlSeconds });
-    await kv.expire(`strava:session:${state}`, STATE_TTL_SECONDS);
+    await kv.expire(`atlo:session:${state}`, STATE_TTL_SECONDS);
 
     res.status(200).send(`
       <!doctype html>
