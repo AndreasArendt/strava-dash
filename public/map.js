@@ -316,7 +316,7 @@ export function applyMapStyle(map, styleId, activities = []) {
     }
   };
 
-  map.once("load", reapply);
+  map.once("idle", reapply);
   map.setStyle(nextStyle);
 }
 
