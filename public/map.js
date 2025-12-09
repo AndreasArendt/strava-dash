@@ -28,6 +28,7 @@ let handleMoveFn;
 let handleLeaveFn;
 let navigationControl;
 let navigationControlMap;
+let fullscreenControl;
 
 function resolveStyle(styleId = DEFAULT_MAP_STYLE_ID) {
   return MAP_STYLE_LOOKUP[styleId] || maptilersdk.MapStyle.STREETS;
@@ -321,18 +322,24 @@ export function applyMapStyle(map, styleId, activities = []) {
 }
 
 function ensureNavigationControl(map) {
-  if (navigationControlMap === map) return;
-
   if (!navigationControl) {
     navigationControl = new maptilersdk.NavigationControl({
       showZoom: false,
-      showCompass: true,
+      showCompass: false
     });
-  } else if (navigationControlMap) {
+  }
+
+  if (!fullscreenControl) {
+    fullscreenControl = new maptilersdk.FullscreenControl();
+  }
+
+  if (navigationControlMap) {
     navigationControlMap.removeControl(navigationControl);
   }
 
   map.addControl(navigationControl, "top-right");
+  map.addControl(fullscreenControl, "bottom-right");
+
   navigationControlMap = map;
 }
 
