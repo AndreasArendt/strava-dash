@@ -20,7 +20,6 @@ let mapInstance;
 let activeMapStyle = DEFAULT_MAP_STYLE_ID;
 let authPollTimer = null;
 const AUTH_ERROR_PATTERN = /(Not authenticated|Missing session state|No token)/i;
-let session;
 
 const toInputValue = (date) => {
   const tzOffset = date.getTimezoneOffset();
@@ -59,6 +58,19 @@ function setConnectAttention(active) {
 function handleAuthRequired(message) {
   setConnectAttention(true);
   showStatusMessage(message || "Connect Strava to load your activities.", "var(--muted)");
+}
+
+async function ensureSessionCookie() {
+  const res = await fetch("/api/session", {
+    method: "POST",
+    credentials: "include"
+  });
+
+  if (!res.ok) {
+    throw new Error(await res.text());
+  }
+
+  return res.json().catch(() => ({}));
 }
 
 async function checkAuthStatus() {
@@ -182,7 +194,13 @@ function changeMapStyle(styleId) {
 }
 
 async function init() {
-  session = await ("api/session"); // Ensure session cookie is set
+  try {
+    await ensureSessionCookie();
+  } catch (err) {
+    console.error("Failed to establish session:", err);
+    showStatusMessage("Unable to initialize your session. Reload the page and try again.", "var(--error)");
+    return;
+  }
 
   try {
     mapInstance = await initMap(els.map);

@@ -1,7 +1,12 @@
-import crypto from "node:crypto";
-import { kv } from "@vercel/kv";
-import { buildSessionCookieValue, SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } from "../lib/session.js";
 import { createCookie } from "../lib/cookie.js";
+import { getKvClient } from "../lib/database.js";
+import {
+  buildSessionCookieValue,
+  createSession,
+  getSessionFromRequest,
+  SESSION_COOKIE_NAME,
+  SESSION_TTL_SECONDS
+} from "../lib/session.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -14,7 +19,23 @@ export default async function handler(req, res) {
       );
   }
 
-  const state = crypto.randomBytes(16).toString("hex");
+  const kv = getKvClient();
+  let state = getSessionFromRequest(req);
+
+  if (state) {
+    const sessionKey = `atlo:session:${state}`;
+    const existing = await kv.get(sessionKey);
+    if (!existing) {
+      const session = await createSession(SESSION_TTL_SECONDS);
+      state = session.state;
+    } else {
+      await kv.expire(sessionKey, SESSION_TTL_SECONDS);
+    }
+  } else {
+    const session = await createSession(SESSION_TTL_SECONDS);
+    state = session.state;
+  }
+
   const cookieValue = buildSessionCookieValue(state);
 
   const params = new URLSearchParams({
@@ -31,8 +52,5 @@ export default async function handler(req, res) {
   });
 
   res.setHeader("Set-Cookie", cookie);
-
-  await kv.set(`atlo:session:${state}`, { issuedAt: Date.now() }, { ex: SESSION_TTL_SECONDS });
-
   res.redirect("https://www.strava.com/oauth/authorize?" + params.toString());
 }
