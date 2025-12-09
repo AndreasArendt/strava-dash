@@ -1,5 +1,5 @@
 import { kv } from "@vercel/kv";
-import { getStateFromRequest, STATE_TTL_SECONDS } from "../lib/state.js";
+import { getSessionFromRequest, SESSION_TTL_SECONDS } from "../lib/session.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -34,13 +34,13 @@ export default async function handler(req, res) {
       return res.status(500).send(`Missing env vars: ${missing.join(", ")}`);
     }
 
-    const state = getStateFromRequest(req);
+    const state = getSessionFromRequest(req);
     if (!state) return res.status(401).send("Missing session state.");
 
     const sessionKey = `atlo:session:${state}`;
     const session = await kv.get(sessionKey);
     if (!session) return res.status(401).send("Session expired; please authenticate.");
-    await kv.expire(sessionKey, STATE_TTL_SECONDS);
+    await kv.expire(sessionKey, SESSION_TTL_SECONDS);
 
     let token = await kv.get(`strava:token:${state}`);
     if (!token) return res.status(404).send("No token; please authenticate first.");

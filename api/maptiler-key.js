@@ -1,5 +1,5 @@
 import { kv } from "@vercel/kv";
-import { getStateFromRequest, STATE_TTL_SECONDS } from "../lib/state.js";
+import { getSessionFromRequest, SESSION_TTL_SECONDS } from "../lib/session.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const state = getStateFromRequest(req);
+    const state = getSessionFromRequest(req);
     if (!state) return res.status(401).send("Missing session state.");
 
     const sessionKey = `atlo:session:${state}`;
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     const token = await kv.get(`strava:token:${state}`);
     if (!token) return res.status(404).send("No token; please authenticate first.");
 
-    await kv.expire(sessionKey, STATE_TTL_SECONDS);
+    await kv.expire(sessionKey, SESSION_TTL_SECONDS);
 
     const key = process.env.MAPTILER_API_KEY;
     if (!key) {

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { kv } from "@vercel/kv";
-import { buildStateCookieValue, STATE_COOKIE_NAME, STATE_TTL_SECONDS } from "../lib/state.js";
+import { buildSessionCookieValue, SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } from "../lib/session.js";
 import { createCookie } from "../lib/cookie.js";
 
 export const config = { runtime: "nodejs" };
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   const state = crypto.randomBytes(16).toString("hex");
-  const cookieValue = buildStateCookieValue(state);
+  const cookieValue = buildSessionCookieValue(state);
 
   const params = new URLSearchParams({
     client_id: process.env.STRAVA_CLIENT_ID,
@@ -26,13 +26,13 @@ export default async function handler(req, res) {
     state,
   });
 
-  const cookie = createCookie(STATE_COOKIE_NAME, cookieValue, {
-    maxAge: STATE_TTL_SECONDS,
+  const cookie = createCookie(SESSION_COOKIE_NAME, cookieValue, {
+    maxAge: SESSION_TTL_SECONDS,
   });
 
   res.setHeader("Set-Cookie", cookie);
 
-  await kv.set(`atlo:session:${state}`, { issuedAt: Date.now() }, { ex: STATE_TTL_SECONDS });
+  await kv.set(`atlo:session:${state}`, { issuedAt: Date.now() }, { ex: SESSION_TTL_SECONDS });
 
   res.redirect("https://www.strava.com/oauth/authorize?" + params.toString());
 }

@@ -1,5 +1,5 @@
 import { kv } from "@vercel/kv";
-import { extractStateFromCookie, STATE_COOKIE_NAME, STATE_TTL_SECONDS } from "../lib/state.js";
+import { extractSessionFromCookie, SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } from "../lib/session.js";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     }
 
     const { code, state } = req.query;
-    const cookieState = extractStateFromCookie(req.cookies?.[STATE_COOKIE_NAME]);
+    const cookieState = extractSessionFromCookie(req.cookies?.[SESSION_COOKIE_NAME]);
 
     if (!state || !cookieState || state !== cookieState) {
       return res
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     // Persist per-user token securely with a reasonable TTL (30 days)
     const ttlSeconds = 60 * 60 * 24 * 30;
     await kv.set(`strava:token:${state}`, token, { ex: ttlSeconds });
-    await kv.expire(`atlo:session:${state}`, STATE_TTL_SECONDS);
+    await kv.expire(`atlo:session:${state}`, SESSION_TTL_SECONDS);
 
     res.status(200).send(`
       <!doctype html>
