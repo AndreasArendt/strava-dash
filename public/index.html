@@ -7,8 +7,10 @@
   <title>Atlo</title>
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/vendor/maptiler-sdk.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css" />
   <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.umd.min.js"></script>
   <link href="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet" />
 </head>
 
@@ -27,14 +29,15 @@
 
     <section class="panel controls">
       <div class="range-inputs">
-        <label>
-          From
-          <input type="date" id="start-date" />
-        </label>
-        <label>
-          To
-          <input type="date" id="end-date" />
-        </label>
+        <div class="date-field">
+          <span>From</span>
+          <input type="text" id="start-date" class="date-input" inputmode="none" readonly />
+        </div>
+        <div class="date-field">
+          <span>To</span>
+          <input type="text" id="end-date" class="date-input" inputmode="none" readonly />
+        </div>
+        <input type="text" id="date-range-picker" class="date-range-anchor" aria-hidden="true" />
         <div class="quick-buttons" aria-label="Quick timeframe buttons">
           <button type="button" data-range="week">Last week</button>
           <button type="button" data-range="month">Last month</button>

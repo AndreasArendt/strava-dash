@@ -3,6 +3,7 @@
   "type": "module",
   "dependencies": {
     "@maptiler/sdk": "^3.9.0",
-    "@vercel/kv": "^1.0.1"
+    "@vercel/kv": "^1.0.1",
+    "flatpickr": "^4.6.13"
   }
 }

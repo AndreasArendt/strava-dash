@@ -16,7 +16,8 @@ const els = {
   pagination: document.getElementById("activity-pagination"),
   prevPage: document.getElementById("prev-page"),
   nextPage: document.getElementById("next-page"),
-  pageIndicator: document.getElementById("page-indicator")
+  pageIndicator: document.getElementById("page-indicator"),
+  rangePickerInput: document.getElementById("date-range-picker")
 };
 
 let activities = [];
@@ -25,6 +26,8 @@ let activeMapStyle = DEFAULT_MAP_STYLE_ID;
 let authPollTimer = null;
 const PAGE_SIZE = 25;
 let currentPage = 1;
+const expandedActivities = new Set();
+let rangePickerInstance;
 const AUTH_ERROR_PATTERN = /(Not authenticated|Missing session state|No token)/i;
 
 const toInputValue = (date) => {
@@ -38,16 +41,64 @@ const formatRangeLabel = (start, end) => {
   return `${start.toLocaleDateString(undefined, opts)} → ${end.toLocaleDateString(undefined, opts)}`;
 };
 
-function setDateInputs(startDate, endDate) {
+function setDateInputs(startDate, endDate, syncPicker = true) {
   els.startDate.value = toInputValue(startDate);
   els.endDate.value = toInputValue(endDate);
   els.rangeLabel.textContent = formatRangeLabel(startDate, endDate);
+  if (syncPicker) {
+    syncRangePickerFromInputs();
+  }
 }
 
 function getDateRange() {
   const start = new Date(els.startDate.value);
   const end = new Date(els.endDate.value);
   return { start, end };
+}
+
+function syncRangePickerFromInputs() {
+  if (!rangePickerInstance) return;
+  const startValue = els.startDate.value;
+  const endValue = els.endDate.value;
+  if (!startValue || !endValue) return;
+  rangePickerInstance.setDate([startValue, endValue], false);
+}
+
+function initRangePicker() {
+  const flatpickrLib = window.flatpickr;
+  if (!flatpickrLib || !els.rangePickerInput) return;
+
+  if (rangePickerInstance) {
+    rangePickerInstance.destroy();
+  }
+
+  rangePickerInstance = flatpickrLib(els.rangePickerInput, {
+    dateFormat: "Y-m-d",
+    defaultDate: [els.startDate.value, els.endDate.value],
+    mode: "range",
+    allowInput: false,
+    disableMobile: true,
+    position: "below",
+    positionElement: els.endDate || els.startDate,
+    onClose: handleRangeSelection,
+  });
+
+  [els.startDate, els.endDate].forEach((input) => {
+    input?.addEventListener("click", () => {
+      if (rangePickerInstance) {
+        rangePickerInstance.open();
+      }
+    });
+  });
+}
+
+function handleRangeSelection(selectedDates) {
+  if (!Array.isArray(selectedDates) || selectedDates.length < 2) return;
+  const [startDate, endDate] = selectedDates;
+  if (!startDate || !endDate) return;
+  setDateInputs(startDate, endDate, false);
+  highlightQuick(null);
+  loadActivities();
 }
 
 function getTotalPages() {
@@ -82,7 +133,7 @@ function renderCurrentPage() {
   }
   const start = (currentPage - 1) * PAGE_SIZE;
   const pageItems = activities.slice(start, start + PAGE_SIZE);
-  renderList(pageItems, els.list);
+  renderList(pageItems, els.list, expandedActivities);
   updatePaginationControls();
 }
 
@@ -177,6 +228,7 @@ async function loadActivities() {
     activities = await api(`/api/activities?${params.toString()}`);
 
     els.count.textContent = activities.length.toString();
+    expandedActivities.clear();
 
     if (mapInstance) {
       renderPolylines(mapInstance, activities);
@@ -255,6 +307,7 @@ async function init() {
   }
 
   applyRange("year");
+  initRangePicker();
 
   els.quickButtons.forEach((btn) => {
     btn.addEventListener("click", () => applyRange(btn.dataset.range));
@@ -281,12 +334,21 @@ async function init() {
     });
   }
 
-  [els.startDate, els.endDate].forEach((input) => {
-    input.addEventListener("change", () => {
-      highlightQuick(null);
-      loadActivities();
+  if (els.list) {
+    els.list.addEventListener("click", (event) => {
+      const toggle = event.target.closest("[data-activity-toggle]");
+      if (!toggle) return;
+      const activityId = toggle.getAttribute("data-activity-toggle");
+      if (!activityId) return;
+      const key = String(activityId);
+      if (expandedActivities.has(key)) {
+        expandedActivities.delete(key);
+      } else {
+        expandedActivities.add(key);
+      }
+      renderCurrentPage();
     });
-  });
+  }
 
   els.connect.addEventListener("click", startAuthFlow);
 

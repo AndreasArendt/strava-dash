@@ -121,35 +121,62 @@ button.need-auth {
 .range-inputs {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
+  gap: 10px;
+  align-items: flex-end;
 }
 
-label {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--muted);
+.date-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--muted);
 }
 
-input[type="date"] {
+.date-field span {
+  margin-left: 6px;
+}
+
+.date-input {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 14px;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 13px;
   font-family: inherit;
-  background: #f1f5f9;
+  background: #f8fafc;
   color: var(--text);
+  cursor: pointer;
+  width: 120px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: rgba(56, 172, 189, 0.7);
+  box-shadow: 0 0 0 1px rgba(56, 172, 189, 0.35);
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.date-range-anchor {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
 }
 
 .quick-buttons {
   display: flex;
   gap: 8px;
   align-items: center;
-  align-self: center;
+  align-self: flex-end;
+  margin-left: auto;
+  padding-left: 24px;
 }
 
 .quick-buttons button {
