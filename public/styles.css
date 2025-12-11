@@ -319,11 +319,10 @@ ul {
 
 li {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
-  padding: 12px 0;
+  padding: 16px 0;
   border-bottom: 1px solid var(--border);
-  align-items: center;
 }
 
 li:last-child {
@@ -331,9 +330,16 @@ li:last-child {
 }
 
 li.muted {
-  justify-content: flex-start;
   padding: 20px 0;
   border-bottom: none;
+}
+
+.activity-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .activity-info {
@@ -367,12 +373,71 @@ li.muted {
   font-size: 14px;
 }
 
+.activity-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.activity-stat {
+  background: rgba(15, 23, 42, 0.02);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pagination-controls {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pagination-controls span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pagination-controls button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 18px;
+  box-shadow: none;
+  font-weight: 500;
+  border-radius: 999px;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (max-width: 700px) {
   body { padding: 24px 12px; }
   .controls { flex-direction: column; align-items: flex-start; }
   .overview { width: 100%; justify-content: space-between; }
   #map { height: 60vh; }
-  li { flex-direction: column; align-items: flex-start; }
+  li { align-items: stretch; }
+  .activity-main { flex-direction: column; align-items: flex-start; }
+  .activity-stats { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 }
 
 .maplibregl-ctrl-group {

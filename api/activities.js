@@ -1,5 +1,5 @@
 import { getSessionFromRequest, SESSION_TTL_SECONDS } from "../lib/session.js";
-import {kv} from "@vercel/kv";
+import { kv } from "@vercel/kv";
 
 export const config = { runtime: "nodejs" };
 
@@ -156,6 +156,9 @@ async function queryActivities(token, req, res) {
           name: a.name,
           id: a.id,
           date: a.start_date,
+          distance: a.distance || 0,
+          movingTime: a.moving_time || a.elapsed_time || 0,
+          elevationGain: a.total_elevation_gain || 0
         }))
     );
 

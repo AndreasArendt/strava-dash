@@ -12,13 +12,19 @@ const els = {
   endDate: document.getElementById("end-date"),
   rangeLabel: document.getElementById("range-label"),
   quickButtons: document.querySelectorAll("[data-range]"),
-  mapStyleButtons: document.querySelectorAll("[data-map-style]")
+  mapStyleButtons: document.querySelectorAll("[data-map-style]"),
+  pagination: document.getElementById("activity-pagination"),
+  prevPage: document.getElementById("prev-page"),
+  nextPage: document.getElementById("next-page"),
+  pageIndicator: document.getElementById("page-indicator")
 };
 
 let activities = [];
 let mapInstance;
 let activeMapStyle = DEFAULT_MAP_STYLE_ID;
 let authPollTimer = null;
+const PAGE_SIZE = 25;
+let currentPage = 1;
 const AUTH_ERROR_PATTERN = /(Not authenticated|Missing session state|No token)/i;
 
 const toInputValue = (date) => {
@@ -42,6 +48,42 @@ function getDateRange() {
   const start = new Date(els.startDate.value);
   const end = new Date(els.endDate.value);
   return { start, end };
+}
+
+function getTotalPages() {
+  return Math.max(1, Math.ceil(activities.length / PAGE_SIZE));
+}
+
+function updatePaginationControls() {
+  if (!els.pagination || !els.pageIndicator || !els.prevPage || !els.nextPage) return;
+  const totalPages = getTotalPages();
+  const shouldShow = activities.length > PAGE_SIZE;
+  els.pagination.hidden = !shouldShow;
+  if (!shouldShow) return;
+  if (currentPage > totalPages) currentPage = totalPages;
+  els.pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+  els.prevPage.disabled = currentPage === 1;
+  els.nextPage.disabled = currentPage === totalPages;
+}
+
+function renderCurrentPage() {
+  if (!els.list) return;
+  if (!activities.length) {
+    renderList([], els.list);
+    if (els.pagination) {
+      els.pagination.hidden = true;
+    }
+    return;
+  }
+
+  const totalPages = getTotalPages();
+  if (currentPage > totalPages) {
+    currentPage = totalPages;
+  }
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = activities.slice(start, start + PAGE_SIZE);
+  renderList(pageItems, els.list);
+  updatePaginationControls();
 }
 
 function highlightQuick(range) {
@@ -140,7 +182,8 @@ async function loadActivities() {
       renderPolylines(mapInstance, activities);
     }
 
-    renderList(activities, els.list);
+    currentPage = 1;
+    renderCurrentPage();
     setConnectAttention(false);
   } catch (err) {
     console.error(err);
@@ -222,6 +265,21 @@ async function init() {
   });
 
   setActiveMapStyle(activeMapStyle);
+
+  if (els.prevPage && els.nextPage) {
+    els.prevPage.addEventListener("click", () => {
+      if (currentPage === 1) return;
+      currentPage -= 1;
+      renderCurrentPage();
+    });
+
+    els.nextPage.addEventListener("click", () => {
+      const totalPages = getTotalPages();
+      if (currentPage >= totalPages) return;
+      currentPage += 1;
+      renderCurrentPage();
+    });
+  }
 
   [els.startDate, els.endDate].forEach((input) => {
     input.addEventListener("change", () => {
