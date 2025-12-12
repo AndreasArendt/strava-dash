@@ -17,7 +17,9 @@ const els = {
   prevPage: document.getElementById("prev-page"),
   nextPage: document.getElementById("next-page"),
   pageIndicator: document.getElementById("page-indicator"),
-  rangePickerInput: document.getElementById("date-range-picker")
+  rangePickerInput: document.getElementById("date-range-picker"),
+  cookieBanner: document.getElementById("cookie-banner"),
+  cookieAccept: document.getElementById("cookie-accept"),
 };
 
 let activities = [];
@@ -32,6 +34,7 @@ const AUTH_ERROR_PATTERN = /(Not authenticated|Missing session state|No token)/i
 const STRAVA_BUTTON_IMG = `<img src="/btn_strava_connect_with_orange.svg" alt="Connect with Strava" />`;
 const LOGOUT_BUTTON_LABEL = "Log out";
 let isAuthenticated = false;
+const COOKIE_CONSENT_KEY = "atlo_cookie_consent_v1";
 
 const toInputValue = (date) => {
   const tzOffset = date.getTimezoneOffset();
@@ -163,6 +166,46 @@ function renderConnectButton(authenticated) {
     els.connect.classList.remove("btn-logout");
     els.connect.innerHTML = STRAVA_BUTTON_IMG;
     els.connect.setAttribute("aria-label", "Connect with Strava");
+  }
+}
+
+function persistCookieChoice(value) {
+  try {
+    window.localStorage.setItem(COOKIE_CONSENT_KEY, value);
+  } catch {
+    // Ignore storage errors (e.g., Safari private mode)
+  }
+}
+
+function initCookieBanner() {
+  if (!els.cookieBanner) return;
+
+  let stored = null;
+  try {
+    stored = window.localStorage.getItem(COOKIE_CONSENT_KEY);
+  } catch {
+    stored = null;
+  }
+
+  if (stored === "accepted") {
+    els.cookieBanner.hidden = true;
+    return;
+  }
+
+  els.cookieBanner.hidden = false;
+
+  const hideBanner = () => {
+    els.cookieBanner.hidden = true;
+  };
+
+  els.cookieAccept?.addEventListener("click", () => {
+    persistCookieChoice("accepted");
+    hideBanner();
+  });
+
+  const privacyLink = els.cookieBanner.querySelector("a.ghost");
+  if (privacyLink) {
+    privacyLink.setAttribute("rel", "noreferrer");
   }
 }
 
@@ -409,6 +452,8 @@ async function init() {
       }
     });
   }
+
+  initCookieBanner();
 
   checkAuthStatus().then((authed) => {
     updateAuthUI(authed);
