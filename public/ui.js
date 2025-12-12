@@ -73,15 +73,25 @@ export function renderList(activities, listEl) {
 
   listEl.innerHTML = activities
     .map((a) => `
-      <li>
-        <div class="activity-main">
-          <div class="activity-info">
-            <a class="activity-link" href="https://www.strava.com/activities/${a.id}" target="_blank" rel="noreferrer">
-              ${escapeHtml(a.name || "Untitled activity")}
-            </a>
-            <span class="activity-type">${escapeHtml(a.type || "-")}</span>
+      <li class="activity-card">
+        <div class="activity-header">
+          <div class="activity-title">
+            <p class="activity-name">${escapeHtml(a.name || "Untitled activity")}</p>
+            <p class="activity-meta">
+              <span class="activity-type">${escapeHtml(a.type || "-")}</span>
+              <span aria-hidden="true">•</span>
+              <span class="activity-date">${humanDate(a.date)}</span>
+            </p>
           </div>
-          <span class="activity-date">${humanDate(a.date)}</span>
+          <a
+            class="activity-strava-link"
+            href="https://www.strava.com/activities/${a.id}"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <i class="fa-brands fa-strava" aria-hidden="true"></i>
+            <span>View on Strava</span>
+          </a>
         </div>
         <div class="activity-stats">
           <div class="activity-stat">
