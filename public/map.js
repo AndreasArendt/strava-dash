@@ -151,7 +151,7 @@ function createFeatureCollection(activities) {
 
       const ecefVectors = ecefPoints.map(([x, y, z = 0]) => ({ x, y, z }));
       const smoothedEcefObjects =
-        ecefVectors.length >= 4 ? atmullRomSpline(ecefVectors, 10, 0.5) : ecefVectors;
+        ecefVectors.length >= 4 ? catmullRomSpline(ecefVectors, 10, 0.5) : ecefVectors;
       const smoothedEcef = smoothedEcefObjects.map(({ x, y, z = 0 }) => [x, y, z]);
 
       const interpolatedWgs = ecefToWgs84(smoothedEcef).map((pt) => [
