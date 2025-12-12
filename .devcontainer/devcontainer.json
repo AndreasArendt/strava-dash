@@ -9,7 +9,7 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
-  "postCreateCommand": "npm install @vercel/kv && npm install -g vercel && npm install marked",
+  "postCreateCommand": "npm install @vercel/kv && npm install -g vercel && npm install marked && npm install gl-matrix",
 
   "customizations": {
     "vscode": {

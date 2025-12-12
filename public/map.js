@@ -1,3 +1,9 @@
+import {
+  wgs84_to_ecef,
+  ecefToWgs84,
+  catmullRomSpline,
+} from "./geo.js";
+
 const maptilersdk = window.maptilersdk;
 if (!maptilersdk) {
   throw new Error(
@@ -128,18 +134,31 @@ function waitForMap(map) {
   });
 }
 
-/**
- * Convert activities with polylines → GeoJSON FeatureCollection
- */
 function createFeatureCollection(activities) {
   const features = activities
     .filter((activity) => Boolean(activity?.polyline))
     .map((activity, idx) => {
-      const decoded = decodePolyline(activity.polyline)
-        .map(([lat, lng]) => [lng, lat]) // Convert to [lng, lat]
-        .filter((pt) => Number.isFinite(pt[0]) && Number.isFinite(pt[1]));
+      const latLngPoints = decodePolyline(activity.polyline).filter(
+        ([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng)
+      );
 
-      if (!decoded.length) return null;
+      if (!latLngPoints.length) return null;
+
+      const decoded = latLngPoints.map(([lat, lng]) => [lng, lat]); // Convert to [lng, lat]
+
+      const ecefPoints = wgs84_to_ecef(latLngPoints.map(([lat, lon]) => [lat, lon, 0]));
+      if (!ecefPoints.length) return null;
+
+      const ecefVectors = ecefPoints.map(([x, y, z = 0]) => ({ x, y, z }));
+      const smoothedEcefObjects =
+        ecefVectors.length >= 4 ? atmullRomSpline(ecefVectors, 10, 0.5) : ecefVectors;
+      const smoothedEcef = smoothedEcefObjects.map(({ x, y, z = 0 }) => [x, y, z]);
+
+      const interpolatedWgs = ecefToWgs84(smoothedEcef).map((pt) => [
+        pt.lon_deg,
+        pt.lat_deg,
+      ]);
+      const coordinates = interpolatedWgs.length ? interpolatedWgs : decoded;
 
       const id = activity?.id ?? `activity-${idx}`;
 
@@ -154,7 +173,7 @@ function createFeatureCollection(activities) {
         },
         geometry: {
           type: "LineString",
-          coordinates: decoded,
+          coordinates,
         },
       };
     })
