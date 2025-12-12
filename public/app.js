@@ -24,7 +24,7 @@ let activities = [];
 let mapInstance;
 let activeMapStyle = DEFAULT_MAP_STYLE_ID;
 let authPollTimer = null;
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 10;
 let currentPage = 1;
 const expandedActivities = new Set();
 let rangePickerInstance;

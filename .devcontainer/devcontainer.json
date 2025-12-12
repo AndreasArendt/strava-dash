@@ -9,7 +9,7 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
-  "postCreateCommand": "npm install @vercel/kv && npm install -g vercel",
+  "postCreateCommand": "npm install @vercel/kv && npm install -g vercel && npm install marked",
 
   "customizations": {
     "vscode": {
@@ -17,7 +17,8 @@
         "ms-python.python",
         "ms-python.vscode-pylance",
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "openai.chatgpt"
       ]
     }
   }
