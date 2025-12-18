@@ -1,5 +1,9 @@
 # Atlo
 
+<p align="center">
+  <img src="logo/atlo.png" alt="Atlo logo" width="160" />
+</p>
+
 Atlo lets Strava athletes explore their activity history on an interactive map in the selected time window.
 
 ## Features
