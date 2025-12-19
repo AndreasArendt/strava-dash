@@ -48,6 +48,8 @@ export default async function handler(req, res) {
 
   const cookie = createCookie(SESSION_COOKIE_NAME, cookieValue, {
     maxAge: SESSION_TTL_SECONDS,
+    sameSite: "None", // needed so Strava redirect includes cookie
+    secure: true,
   });
 
   res.setHeader("Set-Cookie", cookie);
