@@ -30,14 +30,12 @@ export default async function handler(req, res) {
     const raw = req.cookies?.[SESSION_COOKIE_NAME];
     const decoded = raw ? decodeURIComponent(raw) : null;
     const cookieState = extractSessionFromCookie(decoded);
+    const debugInfo = `query=${JSON.stringify(req.query)} | sessionCookie=${decoded ?? "none"}`;
 
     if (!state || !cookieState || state !== cookieState) {
-      console.log("Strava redirect query:", req.query);
-      console.log("Session cookie:", decoded);
-
       return res
         .status(400)
-        .send("Invalid or missing state. Please restart the authentication.");
+        .send(`Invalid or missing state. Please restart the authentication. Debug: ${debugInfo}`);
     }
 
     const tokenResponse = await fetch("https://www.strava.com/oauth/token", {
