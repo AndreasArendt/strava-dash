@@ -93,7 +93,6 @@ button {
   font-weight: 600;
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 120ms ease;
-  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.25);
 }
 button:hover { transform: translateY(-1px); }
 button:active { transform: translateY(0); }
@@ -107,7 +106,8 @@ button.need-auth {
   background: transparent;
   padding: 0;
   border-radius: 999px;
-  overflow: hidden;
+  overflow: hidden;  
+  box-shadow: 0 10px 25px rgba(254, 131, 79, 0.25);
 }
 
 .btn-strava img {
