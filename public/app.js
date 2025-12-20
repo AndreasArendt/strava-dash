@@ -30,9 +30,13 @@ const els = {
   rangePickerInput: document.getElementById("date-range-picker"),
   cookieBanner: document.getElementById("cookie-banner"),
   cookieAccept: document.getElementById("cookie-accept"),
+  activityFilterButtons: document.getElementById('map-filter-buttons'),
 };
 
-let activities = [];
+let allActivities = [];
+let displayActivities = [];
+let currentActivityFilter = 'All';
+
 let mapInstance;
 let activeMapStyle = DEFAULT_MAP_STYLE_ID;
 let authPollTimer = null;
@@ -46,6 +50,7 @@ const STRAVA_BUTTON_IMG = `<img src="/btn_strava_connect_with_orange.svg" alt="C
 const LOGOUT_BUTTON_LABEL = "Log out";
 let isAuthenticated = false;
 const COOKIE_CONSENT_KEY = "atlo_cookie_consent_v1";
+let activityFilterHandlerBound = false;
 
 const toInputValue = (date) => {
   const tzOffset = date.getTimezoneOffset();
@@ -122,14 +127,14 @@ function handleRangeSelection(selectedDates) {
 }
 
 function getTotalPages() {
-  return Math.max(1, Math.ceil(activities.length / PAGE_SIZE));
+  return Math.max(1, Math.ceil(displayActivities.length / PAGE_SIZE));
 }
 
 function updatePaginationControls() {
   if (!els.pagination || !els.pageIndicator || !els.prevPage || !els.nextPage)
     return;
   const totalPages = getTotalPages();
-  const shouldShow = activities.length > PAGE_SIZE;
+  const shouldShow = displayActivities.length > PAGE_SIZE;
   els.pagination.hidden = !shouldShow;
   if (!shouldShow) return;
   if (currentPage > totalPages) currentPage = totalPages;
@@ -140,7 +145,7 @@ function updatePaginationControls() {
 
 function renderCurrentPage() {
   if (!els.list) return;
-  if (!activities.length) {
+  if (!displayActivities.length) {
     renderList([], els.list);
     if (els.pagination) {
       els.pagination.hidden = true;
@@ -153,7 +158,7 @@ function renderCurrentPage() {
     currentPage = totalPages;
   }
   const start = (currentPage - 1) * PAGE_SIZE;
-  const pageItems = activities.slice(start, start + PAGE_SIZE);
+  const pageItems = displayActivities.slice(start, start + PAGE_SIZE);
   renderList(pageItems, els.list, expandedActivities);
   updatePaginationControls();
 }
@@ -313,8 +318,7 @@ async function handleLogout(event) {
       method: "POST",
       credentials: "include",
     });
-    if (!res.ok) throw new Error(await res.text());
-    activities = [];
+    if (!res.ok) throw new Error(await res.text());    
     expandedActivities.clear();
     if (els.count) {
       els.count.textContent = "0";
@@ -329,8 +333,12 @@ async function handleLogout(event) {
     console.error("Logout failed:", err);
     showStatusMessage(err.message || "Failed to log out.", "var(--error)");
   }
+  finally
+  {
+    displayActivities = [];
+    allActivities = [];
+  }
 
-  activities = [];
 }
 
 async function loadActivities() {
@@ -356,17 +364,12 @@ async function loadActivities() {
       after: els.startDate.value,
       before: els.endDate.value,
     });
-    activities = await api(`/api/activities?${params.toString()}`);
+    
+    allActivities = await api(`/api/activities?${params.toString()}`);
+    addActivityTypeFilterButtons(allActivities);
 
-    els.count.textContent = activities.length.toString();
-    expandedActivities.clear();
+    updateActivityDisplay();
 
-    if (mapInstance) {
-      renderPolylines(mapInstance, activities);
-    }
-
-    currentPage = 1;
-    renderCurrentPage();
     updateAuthUI(true);
   } catch (err) {
     console.error(err);
@@ -378,6 +381,119 @@ async function loadActivities() {
   } finally {
     hideStatusSpinner();
   }
+}
+
+function updateActivityDisplay() {
+  showStatusSpinner();
+
+  try
+  {
+    if (!allActivities.length) {
+      displayActivities = [];
+      els.count.textContent = "0";
+      expandedActivities.clear();
+      if (mapInstance) {
+        renderPolylines(mapInstance, []);
+      }
+      currentPage = 1;
+      renderCurrentPage();
+      updatePaginationControls();
+      return;
+    }
+
+    applyActivityFilter(currentActivityFilter);
+  
+    els.count.textContent = displayActivities.length.toString();
+    expandedActivities.clear();
+    
+    if (mapInstance) {
+      renderPolylines(mapInstance, displayActivities);
+    }
+  
+    currentPage = 1;
+    renderCurrentPage();
+  }
+  finally {
+    hideStatusSpinner();
+  }
+}
+
+function applyActivityFilter(filter) {
+  const normalizedFilter = (filter || "All").toString().trim() || "All";
+  currentActivityFilter = normalizedFilter;
+
+  if (!allActivities.length) {
+    displayActivities = [];
+    return;
+  }
+
+  if (normalizedFilter === 'All') {
+    displayActivities = [...allActivities];
+    return;
+  }
+
+  displayActivities = allActivities.filter(
+    a => a.type === normalizedFilter
+  );
+}
+
+function setActiveActivityFilterButton(filterLabel = "All") {
+  if (!els.activityFilterButtons) return;
+  Array.from(els.activityFilterButtons.querySelectorAll("button")).forEach(
+    (btn) => {
+      const label = (btn.dataset.filter || btn.textContent || "").trim();
+      btn.classList.toggle("active", label === filterLabel);
+    }
+  );
+}
+
+function addActivityTypeFilterButtons(activities){
+  if (!els.activityFilterButtons) return;
+
+  const activityTypes = [...new Set(activities.map(a => a.type).filter(Boolean))];
+  const container = els.activityFilterButtons;
+
+  // reset to the base "All" button
+  Array.from(container.querySelectorAll("button")).forEach((btn, idx) => {
+    if (idx === 0) {
+      btn.dataset.filter = "All";
+      btn.textContent = "All";
+      btn.classList.add("active");
+      return;
+    }
+    btn.remove();
+  });
+
+  activityTypes.forEach(type => {
+    const label = String(type).trim();
+    if (!label) return;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.dataset.filter = label;
+
+    container.appendChild(button);
+  });
+
+  if (!activityFilterHandlerBound) {
+    container.addEventListener('click', (e) => {
+      const button = e.target.closest('button');
+      if (!button || !container.contains(button)) return;
+
+      const filterValue = (button.dataset.filter || button.textContent || "").trim() || "All";
+      currentActivityFilter = filterValue;
+      setActiveActivityFilterButton(filterValue);
+      updateActivityDisplay();
+    });
+    activityFilterHandlerBound = true;
+  }
+
+  const availableFilters = ["All", ...activityTypes];
+  if (!availableFilters.includes(currentActivityFilter)) {
+    currentActivityFilter = "All";
+  }
+  setActiveActivityFilterButton(currentActivityFilter);
 }
 
 function applyRange(range) {
@@ -416,7 +532,7 @@ function changeMapStyle(styleId) {
   activeMapStyle = styleId;
   setActiveMapStyle(styleId);
   if (mapInstance) {
-    applyMapStyle(mapInstance, styleId, activities);
+    applyMapStyle(mapInstance, styleId, displayActivities);
   }
 }
 

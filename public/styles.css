@@ -243,6 +243,14 @@ button.need-auth {
   gap: 12px;
 }
 
+/* Map Config Container */
+.map-config {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* Map Styles */
 .map-style-card {
   margin-left: auto;
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -299,6 +307,60 @@ button.need-auth {
   position: relative;
 }
 
+/* Map Activity Filter */
+.map-filter-card {
+  margin-right: auto;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+}
+
+.map-filter-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.map-filter-label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.map-filter-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.map-filter-buttons button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: none;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.map-filter-buttons button:hover {
+  border-color: rgba(15, 23, 42, 0.25);
+  color: var(--text);
+}
+
+.map-filter-buttons button.active {
+  color: var(--text);
+  border-color: rgba(15, 23, 42, 0.3);
+  background: rgba(15, 23, 42, 0.04);
+}
+
+/* Map */
 #map {
   width: 100%;
   height: clamp(420px, 60vh, 640px);
