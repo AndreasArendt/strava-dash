@@ -558,6 +558,9 @@ async function init() {
     return;
   }
 
+  // add connect button once consent given
+  document.querySelector('.btn-strava').classList.add('cookie-consent-given');  
+
   try {
     await ensureSessionCookie();
   } catch (err) {
