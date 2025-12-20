@@ -21,10 +21,12 @@ const MAP_STYLE_LOOKUP = {
   outdoor: maptilersdk.MapStyle.OUTDOOR,
   hybrid: maptilersdk.MapStyle.HYBRID,
   topo: maptilersdk.MapStyle.TOPO,
+  winter: maptilersdk.MapStyle.WINTER,
 };
 
 export const DEFAULT_MAP_STYLE_ID = "bright";
 let currentStyleId = DEFAULT_MAP_STYLE_ID;
+let lastActivities = [];
 
 let keyPromise;
 let interactionsBound = false;
@@ -292,6 +294,9 @@ export async function initMap(container) {
  */
 export function renderPolylines(map, activities = []) {
   if (!map) return;
+  if (Array.isArray(activities)) {
+    lastActivities = activities;
+  }
 
   const apply = () => {
     const collection = createFeatureCollection(activities);
@@ -311,15 +316,30 @@ export function renderPolylines(map, activities = []) {
     fitToFeatures(map, collection.features);
   };
 
-  if (map.loaded()) {
+  const isReady =
+    typeof map.isStyleLoaded === "function"
+      ? map.isStyleLoaded()
+      : map.loaded();
+
+  if (isReady) {
     apply();
   } else {
-    map.once("load", apply);
+    const applyOnce = () => {
+      map.off("style.load", applyOnce);
+      map.off("load", applyOnce);
+      apply();
+    };
+
+    map.on("style.load", applyOnce);
+    map.on("load", applyOnce);
   }
 }
 
 export function applyMapStyle(map, styleId, activities = []) {
   if (!map) return;
+  if (Array.isArray(activities) && activities.length) {
+    lastActivities = activities;
+  }
 
   const desiredId = MAP_STYLE_LOOKUP[styleId] ? styleId : DEFAULT_MAP_STYLE_ID;
   const nextStyle = resolveStyle(desiredId);
@@ -327,16 +347,41 @@ export function applyMapStyle(map, styleId, activities = []) {
 
   currentStyleId = desiredId;
 
+  const currentView = {
+    center: map.getCenter(),
+    zoom: map.getZoom(),
+    bearing: map.getBearing(),
+    pitch: map.getPitch(),
+  };
+
   const reapply = () => {
     ensureNavigationControl(map);
-    if (activities.length) {
-      renderPolylines(map, activities);
+    const activitiesToRender =
+      (Array.isArray(activities) && activities.length
+        ? activities
+        : Array.isArray(lastActivities)
+        ? lastActivities
+        : []);
+
+    if (activitiesToRender.length) {
+      renderPolylines(map, activitiesToRender);
     } else {
       clearPolylineLayer(map);
     }
+
+    // Restore prior camera so style changes don't reset zoom/position.
+    map.jumpTo(currentView);
   };
 
-  map.once("idle", reapply);
+  const onStyleLoad = () => {
+    map.off("style.load", onStyleLoad);
+    map.off("idle", onStyleLoad);
+    reapply();
+  };
+
+  // Fallback to "idle" in case "style.load" is skipped by the SDK after setStyle.
+  map.on("idle", onStyleLoad);
+  map.on("style.load", onStyleLoad);
   map.setStyle(nextStyle);
 }
 
