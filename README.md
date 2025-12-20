@@ -9,7 +9,9 @@ Atlo lets Strava athletes explore their activity history on an interactive map i
 ## Features
 * Plotting activity Data on the map
 * Interpolation of polylines for smoother trajectories
-* Minimum data footprint
+* Minimum user-data footprint
+* Activity summary
+* Filter by Activity
 
 ## Architecture Overview
 
