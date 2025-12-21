@@ -263,7 +263,7 @@ async function fetchGearDetails(gearIds = []) {
     missing.forEach((id) => params.append("id", id));
     const fetched = await api(`/api/gears?${params.toString()}`);
     if (Array.isArray(fetched)) {
-      fetched.forEach((item) => state.gearCache.set(item.id, item));
+      fetched.forEach((item) => state.gearCache.set(item.id, item));      
     }
   }
 
@@ -275,17 +275,28 @@ async function fetchGearDetails(gearIds = []) {
 const viewModes = {
   list: {
     showPagination: true,
+    useGlobalSpinner: true,
     prepare: () => ({}),
     render: () => renderCurrentPage(),
   },
   summary: {
     showPagination: false,
+    useGlobalSpinner: true,
     prepare: (activities) => ({ totals: computeTotals(activities) }),
     render: ({ context, activities }) =>
       renderSummary(context.totals, activities.length, els.list, activities),
   },
   gears: {
     showPagination: false,
+    useGlobalSpinner: false,
+    renderLoading: () => {
+      if (!els.list) return;
+      els.list.innerHTML = gearSummaryTemplate({
+        gearsLabel: "Loading gear…",
+        items: [],
+        loading: true,
+      });
+    },
     prepare: async () => {
       const gear = await fetchGearDetails(state.displayGearIDs);
       return { gear };
@@ -301,11 +312,12 @@ const viewModes = {
 };
 
 export async function updateActivityDisplay({ skipMapUpdate = false } = {}) {
-  showStatusSpinner();
+  let viewMode = viewModes[state.activeSummaryStyle] || viewModes.list;
+  if (viewMode.useGlobalSpinner !== false) {
+    showStatusSpinner();
+  }
 
   try {
-    const viewMode = viewModes[state.activeSummaryStyle] || viewModes.list;
-
     if (els.pagination) {
       els.pagination.hidden = !viewMode.showPagination;
       els.pagination.classList.toggle("display-summary", !viewMode.showPagination);
@@ -335,6 +347,10 @@ export async function updateActivityDisplay({ skipMapUpdate = false } = {}) {
       renderPolylines(state.mapInstance, state.displayActivities);
     }
 
+    if (viewMode.renderLoading) {
+      viewMode.renderLoading();
+    }
+
     const context = viewMode.prepare
       ? await viewMode.prepare(state.displayActivities)
       : {};
@@ -342,7 +358,9 @@ export async function updateActivityDisplay({ skipMapUpdate = false } = {}) {
       viewMode.render({ context, activities: state.displayActivities })
     );
   } finally {
-    hideStatusSpinner();
+    if (viewMode.useGlobalSpinner !== false) {
+      hideStatusSpinner();
+    }
   }
 }
 

@@ -1,6 +1,6 @@
-export function gearSummaryTemplate({ gearsLabel, items = [] }) {
+export function gearSummaryTemplate({ gearsLabel, items = [], loading = false }) {
   if (!Array.isArray(items) || !items.length) {
-    return `<li class="muted">No gear data available for this selection.</li>`;
+    return `<li class="muted">${loading ? "Loading gear…" : "No gear data available for this selection."}</li>`;
   }
 
   return `
