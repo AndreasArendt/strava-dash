@@ -284,8 +284,8 @@ export function renderSummary(totals, count, listEl, activities = []) {
 
   renderCumulativeChart(activities, timeEl, {
     key: "time",
-    title: "Time",
-    unitLabel: "hours",
+    title: " Time",
+    unitLabel: "",
     lineColor: getCssVar("--muted", "#113c4c"),
     valueForActivity: (a) => a?.movingTime,
     convertValue: (v) => +(v / 3600).toFixed(2),
