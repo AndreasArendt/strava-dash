@@ -23,22 +23,23 @@ function updatePaginationControls() {
   if (!els.pagination || !els.pageIndicator || !els.prevPage || !els.nextPage)
     return;
   const totalPages = getTotalPages();
-  const shouldShow = state.displayActivities.length > PAGE_SIZE;
-  els.pagination.hidden = !shouldShow;
-  if (!shouldShow) return;
   if (state.currentPage > totalPages) state.currentPage = totalPages;
   els.pageIndicator.textContent = `Page ${state.currentPage} of ${totalPages}`;
   els.prevPage.disabled = state.currentPage === 1;
   els.nextPage.disabled = state.currentPage === totalPages;
+  const shouldShow = state.displayActivities.length > PAGE_SIZE;
+  els.pagination.hidden = !shouldShow;
 }
 
 export function renderCurrentPage() {
   if (!els.list) return;
   if (!state.displayActivities.length) {
+    state.currentPage = 1;
     renderList([], els.list);
     if (els.pagination) {
       els.pagination.hidden = true;
     }
+    updatePaginationControls();
     return;
   }
 
@@ -173,6 +174,7 @@ export function updateActivityDisplay({ skipMapUpdate = false } = {}) {
     }
 
     applyActivityFilter(state.currentActivityFilter);
+    state.currentPage = 1;
 
     els.count.textContent = state.displayActivities.length.toString();
     state.expandedActivities.clear();
@@ -200,7 +202,6 @@ export function updateActivityDisplay({ skipMapUpdate = false } = {}) {
       return;
     }
 
-    state.currentPage = 1;
     renderCurrentPage();
   } finally {
     hideStatusSpinner();
