@@ -1,4 +1,4 @@
-export function summaryTemplate({
+export function activitySummaryTemplate({
   activityCountLabel,
   totalDistance,
   totalTime,
@@ -7,7 +7,8 @@ export function summaryTemplate({
   return `
     <li class="activity-card summary-card">
       <div class="activity-header">
-        <div class="activity-title">          
+        <div class="activity-title">  
+        <p class="activity-name">Summary</p>        
           <p class="activity-meta">
             <span class="activity-type">${activityCountLabel}</span>
           </p>

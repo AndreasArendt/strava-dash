@@ -1,65 +1,15 @@
-import { getSessionFromRequest, SESSION_TTL_SECONDS } from "../lib/session.js";
-import { kv } from "@vercel/kv";
+import { rateLimit, getStravaContext } from "../lib/api.js";
 
 export const config = { runtime: "nodejs" };
-
-async function refreshToken(state, current) {
-  const resp = await fetch("https://www.strava.com/oauth/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: process.env.STRAVA_CLIENT_ID,
-      client_secret: process.env.STRAVA_CLIENT_SECRET,
-      grant_type: "refresh_token",
-      refresh_token: current.refresh_token,
-    }),
-  });
-
-  if (!resp.ok) return null;
-  const token = await resp.json();
-  const ttlSeconds = 60 * 60 * 24 * 30;
-  
-  await kv.set(`strava:token:${state}`, token, { ex: ttlSeconds });
-  return token;
-}
 
 export default async function handler(req, res) {
   const allowed = await rateLimit(req, res);
   if (!allowed) return;
-
   try {
-    const missing = [
-      "STRAVA_CLIENT_ID",
-      "STRAVA_CLIENT_SECRET",
-      "KV_REST_API_URL",
-      "KV_REST_API_TOKEN",
-    ].filter((k) => !process.env[k]);
-    if (missing.length) {
-      return res.status(500).send(`Missing env vars: ${missing.join(", ")}`);
-    }
+    const ctx = await getStravaContext(req, res);
+    if (!ctx) return;
 
-    const state = getSessionFromRequest(req);
-    if (!state) return res.status(401).send("Missing session state.");
-
-    const sessionKey = `atlo:session:${state}`;
-    const session = await kv.get(sessionKey);
-    if (!session)
-      return res.status(401).send("Session expired; please authenticate.");
-    await kv.expire(sessionKey, SESSION_TTL_SECONDS);
-
-    let token = await kv.get(`strava:token:${state}`);
-    if (!token)
-      return res.status(404).send("No token; please authenticate first.");
-
-    const now = Math.floor(Date.now() / 1000);
-    if (
-      token.expires_at &&
-      token.expires_at <= now + 60 &&
-      token.refresh_token
-    ) {
-      const refreshed = await refreshToken(state, token);
-      if (refreshed) token = refreshed;
-    }
+    const { token } = ctx;
 
     const simplified = await queryActivities(token, req, res);
 
@@ -68,27 +18,6 @@ export default async function handler(req, res) {
     console.log("Error in /api/activities:", err.message);
     return res.status(500).send("Internal error");
   }
-}
-
-async function rateLimit(req, res) {
-  const state = getSessionFromRequest(req);
-  const key = `rate-limit:${state}`;
-
-  const limit = 100; // Max requests
-  const windowSeconds = 15 * 60; // 15 minutes
-
-  const requests = await kv.incr(key);
-
-  if (requests === 1) {
-    await kv.expire(key, windowSeconds);
-  }
-
-  if (requests > limit) {
-    res.status(429).json({ message: "Too many requests, try again later." });
-    return false;
-  }
-
-  return true;
 }
 
 async function buildBaseParams(req) {
@@ -158,7 +87,8 @@ async function queryActivities(token, req, res) {
           date: a.start_date,
           distance: a.distance || 0,
           movingTime: a.moving_time || a.elapsed_time || 0,
-          elevationGain: a.total_elevation_gain || 0
+          elevationGain: a.total_elevation_gain || 0,
+          gear_id: a.gear_id,
         }))
     );
 

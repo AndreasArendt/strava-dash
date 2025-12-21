@@ -1,6 +1,7 @@
 export const state = {
   allActivities: [],
   displayActivities: [],
+  displayGearIDs: [],
   currentActivityFilter: "All",
   activeSummaryStyle: "all",
   mapInstance: null,
@@ -11,4 +12,6 @@ export const state = {
   rangePickerInstance: null,
   isAuthenticated: false,
   activityFilterHandlerBound: false,
+  gearCache: new Map(),
+  gearChartInstance: null,
 };

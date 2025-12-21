@@ -1,5 +1,5 @@
 import { activityItemTemplate } from "./templates/activityItemTemplate.js";
-import { summaryTemplate } from "./templates/summaryTemplate.js";
+import { activitySummaryTemplate } from "./templates/activitySummaryTemplate.js";
 
 const spinnerEl = document.getElementById("status-spinner");
 const messageEl = document.getElementById("status-message");
@@ -223,7 +223,7 @@ export function renderSummary(totals, count, listEl, activities = []) {
   const activityCount = Number(count) || 0;
 
   const activityCountLabel = `${activityCount} activit${activityCount === 1 ? "y" : "ies"}`;
-  listEl.innerHTML = summaryTemplate({
+  listEl.innerHTML = activitySummaryTemplate({
     activityCountLabel,
     totalDistance: formatDistance(distance),
     totalTime: formatDuration(movingTime),
