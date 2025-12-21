@@ -261,13 +261,12 @@ export function renderSummary(totals, count, listEl, activities = []) {
   const distanceEl = chartsContainer?.querySelector('[data-chart-type="distance"]');
   const elevationEl = chartsContainer?.querySelector('[data-chart-type="elevation"]');
   const timeEl = chartsContainer?.querySelector('[data-chart-type="time"]');
-  const lineColor = getCssVar("--text", "#2d3748");
 
   renderCumulativeChart(activities, distanceEl, {
     key: "distance",
-    title: "Total Distance",
+    title: "Distance",
     unitLabel: "",
-    lineColor,
+    lineColor: "#113c4c",
     valueForActivity: (a) => a?.distance,
     convertValue: (v) => +(v / 1000).toFixed(2),
     valueFormatter: (v) => `${Number(v).toFixed(1)} km`,
@@ -275,9 +274,9 @@ export function renderSummary(totals, count, listEl, activities = []) {
 
   renderCumulativeChart(activities, elevationEl, {
     key: "elevation",
-    title: "Total Elevation",
+    title: "Elevation",
     unitLabel: "",
-    lineColor,
+    lineColor: getCssVar("--accent", "#113c4c"),
     valueForActivity: (a) => a?.elevationGain,
     convertValue: (v) => Math.round(v),
     valueFormatter: (v) => `${Math.round(v)} m`,
@@ -285,9 +284,9 @@ export function renderSummary(totals, count, listEl, activities = []) {
 
   renderCumulativeChart(activities, timeEl, {
     key: "time",
-    title: "Total Time",
-    unitLabel: "",
-    lineColor,
+    title: "Time",
+    unitLabel: "hours",
+    lineColor: getCssVar("--muted", "#113c4c"),
     valueForActivity: (a) => a?.movingTime,
     convertValue: (v) => +(v / 3600).toFixed(2),
     valueFormatter: (v) => `${Number(v).toFixed(1)} h`,
