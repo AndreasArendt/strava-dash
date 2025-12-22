@@ -131,7 +131,7 @@ function addActivityTypeFilterButtons(activities) {
 
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = label;
+    button.textContent = label.split(/(?=[A-Z])/).join(" ");
     button.dataset.filter = label;
 
     container.appendChild(button);
