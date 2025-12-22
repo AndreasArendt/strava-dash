@@ -284,6 +284,7 @@ export function renderList(activities, listEl) {
         distance: formatDistance(a.distance),
         movingTime: formatDuration(a.movingTime),
         elevationGain: formatElevation(a.elevationGain),
+        hasMapdata: Boolean(a.hasMapdata),
       })
     )
     .join("");

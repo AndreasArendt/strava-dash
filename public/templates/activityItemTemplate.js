@@ -6,7 +6,22 @@ export function activityItemTemplate({
   distance,
   movingTime,
   elevationGain,
+  hasMapdata,
 }) {
+  const mapButton = hasMapdata
+    ? `
+            <button
+              type="button"
+              class="activity-map-link"
+              data-activity-focus="${id}"
+              aria-label="Zoom to ${name}"
+            >
+              <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+              <span>View on Map</span>
+            </button>
+    `
+    : "";
+
   return `
       <li class="activity-card">
         <div class="activity-header">
@@ -19,15 +34,7 @@ export function activityItemTemplate({
             </p>
           </div>
           <div class="activity-actions">
-            <button
-              type="button"
-              class="activity-map-link"
-              data-activity-focus="${id}"
-              aria-label="Zoom to ${name}"
-            >
-              <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
-              <span>View on Map</span>
-            </button>
+            ${mapButton}
             <a
               class="activity-strava-link"
               href="https://www.strava.com/activities/${id}"

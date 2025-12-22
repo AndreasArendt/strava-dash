@@ -78,7 +78,6 @@ async function queryActivities(token, req, res) {
     const data = await resp.json();
     simplified.push(
       ...data
-        .filter((a) => a.map && a.map.summary_polyline)
         .map((a) => ({
           polyline: a.map.summary_polyline,
           type: a.type,
@@ -89,6 +88,7 @@ async function queryActivities(token, req, res) {
           movingTime: a.moving_time || a.elapsed_time || 0,
           elevationGain: a.total_elevation_gain || 0,
           gear_id: a.gear_id,
+          hasMapdata: Boolean(a.map && a.map.summary_polyline)
         }))
     );
 
