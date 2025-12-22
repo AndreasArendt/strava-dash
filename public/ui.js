@@ -279,7 +279,7 @@ export function renderList(activities, listEl) {
       activityItemTemplate({
         id: escapeHtml(a.id?.toString() || ""),
         name: escapeHtml(a.name || "Untitled activity"),
-        type: escapeHtml(a.type || "-"),
+        type: escapeHtml(a.type || "-").split(/(?=[A-Z])/).join(" "),
         date: humanDate(a.date),
         distance: formatDistance(a.distance),
         movingTime: formatDuration(a.movingTime),
