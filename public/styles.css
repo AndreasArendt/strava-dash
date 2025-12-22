@@ -224,6 +224,15 @@ button:active { transform: translateY(0); }
   color: var(--muted);
   padding: 8px 14px;
   box-shadow: none;
+  font-weight: 500;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, color 150ms ease;
+}
+
+.quick-buttons button:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+  color: var(--text);
 }
 
 .quick-buttons button.active {
@@ -382,6 +391,32 @@ button:active { transform: translateY(0); }
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .map-config {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .filter-card,
+  .map-style-card {
+    width: 100%;
+  }
+
+  .filter-card,
+  .map-style-card {
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+  }
+
+  .filter-controls,
+  .map-style-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 .filter-buttons {
@@ -811,8 +846,56 @@ li.muted {
 
 @media (max-width: 700px) {
   body { padding: 24px 12px; }
-  .controls { flex-direction: column; align-items: flex-start; }
-  .overview { width: 100%; justify-content: space-between; }
+
+  .controls {
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .range-inputs {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .quick-buttons {
+    margin-left: 0;
+    padding: 0;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .overview {
+    width: 100%;
+    min-width: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .overview > div {
+    flex: 1 1 150px;
+    max-width: none;
+    min-width: 0;
+    text-align: left;
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  .overview > div:first-child {
+    flex: 1 1 140px;
+    max-width: none;
+  }
+
+  .label,
+  .value {
+    text-align: left;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   #map { height: 60vh; }
   li { align-items: stretch; }
   .activity-main { flex-direction: column; align-items: flex-start; }
